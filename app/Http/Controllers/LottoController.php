@@ -13,8 +13,20 @@ use App\Services\LottoService;
 class LottoController extends Controller
 {
     public function index() {
+      $fileTest = '/home/macest/logs/'.date("Ymd").'.txt';
+      if (!file_exists($fileTest) ) {
+          include 'cron.php';
+          $drawsbb = (new LottoService)->fillLottoDoubles();
+          $h = fopen($fileTest, "a");
+          $dating = "test";
+          fwrite($h, $dating);
+          fclose($h);
+      }
       $draws = DB::select('select * from lotto');
       $draws = Lotto::orderBy('draw_date', 'desc')->take(10)->get();
+      if ($_SERVER['REMOTE_ADDR'] == '83.26.167.130' || $_SERVER['REMOTE_ADDR']=='2a01:111f:a72:6700:8da0:da91:c6c8:e98b') {
+          $drawsbb = (new LottoService)->fillLottoDoubles();
+      }
       return view('lotto_view',['draws'=>$draws]);
    }
    
