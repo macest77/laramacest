@@ -38,12 +38,14 @@
 
             <div class="max-w-6xl mx-auto sm:px-6 lg:px-8">
                
-               <h1>MACEST</h1>
+               <h1>LARAMACEST</h1>
                
                <p>My site in Laravel version</p>
 <div id="menu" style="right: 15px; text-align: left; position: absolute; top: 0px">Menu<br />
 -> <a href="/lotto">Wyniki lotto</a><br />
--> <a href="/lotto/przewidywania">Przypuszczalne najbliższe wyniki</a></div>
+-> <a href="/lotto/przewidywania">Przypuszczalne najbliższe wyniki</a><br />
+-> <a href="/reviews">Recenzje albumów</a><br />
+-> <a href="/lista-hard-n-heavy">Lista Hard'n'Heavy</a></div>
 <div style="clear: both"> </div>
                 
 
