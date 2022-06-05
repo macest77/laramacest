@@ -4,6 +4,8 @@ namespace App\Services;
 
 use App\Models\Lotto;
 use App\Models\Duzylotek;
+use App\Models\LottoDoubles;
+use DB;
 
 class LottoService
 {
@@ -15,6 +17,7 @@ class LottoService
         }
         return ($a < $b) ? -1 : 1;
     }
+    
     private function checkDoubleDraws() {
         $draws_data = Lotto::orderby('draw_date', 'desc')->take(40)->get();//where('draw_numbers', 'like', '|'.$nb.'|')->orderby('draw_date', 'desc');
         $draw_id = 0; $draw_taken = 0; $draw_found = 0;
@@ -31,7 +34,7 @@ class LottoService
             $d = $draws[$draw_id];
         //foreach ($draws as $d) {
             //$draw_id++;
-            if ($draw_id == 1) echo $d->draw_date.'<br />';
+            //if ($draw_id == 1) echo $d->draw_date.'<br />';
             $draw_array = explode('|', $d->draw_numbers);
             for($i=1;$i<7;$i++) {
                 if (empty($draw_numbers[$draw_array[$i]]) )
@@ -65,12 +68,13 @@ class LottoService
                 $draw_numbers[$draw_array[$i]]['last'] = $draw_id;
                 $draw_numbers[$draw_array[$i]]['draw_taken']++;
             }
-        }echo 'd - '.$draw_id.'<br />';
+        }//echo 'd - '.$draw_id.'<br />';
         return $draw_numbers;
         foreach($draw_numbers as $nb => $nb_array) {
-            echo '<br />'.$nb.' ;'; print_r($nb_array);
-        } exit;
+            //echo '<br />'.$nb.' ;'; print_r($nb_array);
+        } //exit;
     }
+    
     public function suggested() {
         
        $last = Lotto::orderBy('draw_date', 'desc')->first();
@@ -117,7 +121,7 @@ class LottoService
                                     //$suggested .= $id.'|';
                                     $suggestedArray[0][$id] = array('avg'=>$numbers[$id]['avg'], 'now'=>$now, 'draws'=>$draws, 'last'=>($numbers[$id]['avg']-$draws));
                                 }
-                                echo "$draws : $id (avg: $a / $now)$t - ".print_r($dns[$id], true).'<br /><br />';
+                                echo "$draws : $id (avg: $a / $now)$t - ".(isset($dns[$id])?print_r($dns[$id], true):"there is no index $id in dns").'<br /><br />';
                             } else {
                                 $t = '';
                                 if ($now == 0) {
@@ -128,7 +132,7 @@ class LottoService
                                     $suggestedArray[2][$id] = array('avg'=>$numbers[$id]['avg'], 'now'=>$now, 'draws'=>$draws, 'last'=>($numbers[$id]['avg']-$draws));
                                 }
                                 //$a = $numbers[$id]['avg'];
-                                echo "---$draws : $id (avg: $a / $now)$t - ".print_r($dns[$id], true).'<br /><br />';
+                                echo "---$draws : $id (avg: $a / $now)$t - ".(isset($dns[$id])?print_r($dns[$id], true):"there is no index $id in dns").'<br /><br />';
                             }
                             //print_r($numbers[$id]);exit;
                             //$additionals = array('doubled'=>array(), 'd1'=>array(), 'd2'=>array(), 'd3'=>array());
@@ -210,4 +214,134 @@ class LottoService
        return $last->next_suggested;
     }
     
+    public function fillLottoDoubles()
+    {
+        $last_draw = LottoDoubles::orderby('last', 'desc')->take(1)->get();
+        //echo $last_draw[0]->last.'<br />';
+        $draws = Lotto::where('draw_date', '>', $last_draw[0]->last)->orderby('draw_date', 'asc')->get();
+        //echo 'draws-count: '.$draws->count().'<br />';
+        if ($draws->count() > 0) {
+            //echo 'draw-date: '.$draws[0]->draw_date.'<br />';
+            $d_count = 0;
+            foreach($draws as $d) {
+                if ($d_count < 11) {
+                $d_date = $draws[$d_count]->draw_date;
+                //echo 'd-draw_numbers: '.$d->draw_numbers.'<br />';
+                $expl = explode('|', $d->draw_numbers);
+                $numbers_list = '';
+                $combinations = array(2 => array(), array(), array(), array(), array($expl));
+                for($i=1;$i<6;$i++) {
+                    for($a=($i+1);$a<7;$a++) {
+                        if ($a == ($i+1)) {
+                            for($c=2;$c<7;$c++) {
+                                if ($c <= (7-$i) )
+                                    $combinations[$c][$expl[$i]] = array();
+                            }
+                        }
+                        $combinations[2][$expl[$i]][] = $expl[$a];
+                        if ($a < 6) {
+                            $combinations[3][$expl[$i]][$expl[$a]] = array();
+                            for($b=($a+1);$b<7;$b++) {
+                                $combinations[3][$expl[$i]][$expl[$a]][] = $expl[$b];
+                            }
+                        }
+                        if ($a < 5) {
+                            $combinations[4][$expl[$i]][$expl[$a]] = array();
+                            for($b=($a+1);$b<6;$b++) {
+                                $combinations[4][$expl[$i]][$expl[$a]][$expl[$b]] = array();
+                                for($c=($b+1);$c<7;$c++) {
+                                    $combinations[4][$expl[$i]][$expl[$a]][$expl[$b]][] = $expl[$c];
+                                }
+                            }
+                        }
+                        if ($a < 4) {
+                            $combinations[5][$expl[$i]][$expl[$a]] = array();
+                            for($b=($a+1);$b<5;$b++) {
+                                $combinations[5][$expl[$i]][$expl[$a]][$expl[$b]] = array();
+                                for($c=($b+1);$c<6;$c++) {
+                                   if (empty($combinations[5][$expl[$i]][$expl[$a]][$expl[$b]][$expl[$c]]))
+                                    $combinations[5][$expl[$i]][$expl[$a]][$expl[$b]][$expl[$c]] = array();
+                                    $combinations[5][$expl[$i]][$expl[$a]][$expl[$b]][$expl[$c]][] = $expl[$c+1];
+                                }
+                            }
+                        }
+                    }
+                }
+                $double_draws = LottoDoubles::where('numbers', 'like', '%|'.$expl[1].'|%')
+                                            ->orWhere('numbers', 'like', '%|'.$expl[2].'|%')
+                                            ->orWhere('numbers', 'like', '%|'.$expl[3].'|%')
+                                            ->orWhere('numbers', 'like', '%|'.$expl[4].'|%')
+                                            ->orWhere('numbers', 'like', '%|'.$expl[5].'|%')
+                                            ->orWhere('numbers', 'like', '%|'.$expl[6].'|%')
+                                            ->get();
+                $double_draws_array = array();
+                foreach($double_draws as $dd) {
+                    $double_draws_array[$dd->numbers] = $dd;
+                }
+                //echo print_r($expl, true).'<br /><br />'.print_r($combinations, true).'<br />';
+                foreach($combinations as $c => $numbers) {//echo '<br />c: '.$c.'<br />';
+                    foreach($numbers as $n => $numbs) {//echo 'n: '.$n.' ';
+                        if (is_array($numbs)) {
+                            foreach($numbs as $n2 => $numbs2) {//echo $n2.' ';
+                                if (is_array($numbs2)) {
+                                    foreach($numbs2 as $n3 => $numbs3) {//echo $n3.' ';
+                                        if (is_array($numbs3)) {
+                                            foreach($numbs3 as $n4 => $numbs4) {//echo $n4.' ';
+                                                if (is_array($numbs4)) {
+                                                    foreach($numbs4 as $n5 => $numbs5) {//echo $n5.' ';
+                                                        if (is_array($numbs5)) {
+                                                        } else {
+                                                            $numbers_txt = '|'.$n.'|'.$n2.'|'.$n3.'|'.$n4.'|'.$numbs5.'|';
+                                                            //echo ';'.$c.': |'.$n.'|'.$n2.'|'.$n3.'|'.$n4.'|'.$numbs5.'| ; ';
+                                                            if (isset($double_draws_array[$numbers_txt]) ) {
+                                                                LottoDoubles::where('id', $double_draws_array[$numbers_txt]->id)->update(['total_hits'=>($double_draws_array[$numbers_txt]->total_hits+1), 'last'=>$d_date]);
+                                                            } else {
+                                                                DB::insert('insert into lotto_doubles (numbers, descript, last) values(?, ?, ?)',[$numbers_txt, $c, $d_date]);
+                                                            }
+                                                        }
+                                                    }
+                                                } else {
+                                                    $numbers_txt = '|'.$n.'|'.$n2.'|'.$n3.'|'.$numbs4.'|';
+                                                    //echo ';'.$c.': |'.$n.'|'.$n2.'|'.$n3.'|'.$numbs4.'| ; ';
+                                                    if (isset($double_draws_array[$numbers_txt]) ) {
+                                                        LottoDoubles::where('id', $double_draws_array[$numbers_txt]->id)->update(['total_hits'=>($double_draws_array[$numbers_txt]->total_hits+1), 'last'=>$d_date]);
+                                                    } else {
+                                                        DB::insert('insert into lotto_doubles (numbers, descript, last) values(?, ?, ?)',[$numbers_txt, $c, $d_date]);
+                                                    }
+                                                }
+                                            }
+                                        } else {
+                                            $numbers_txt = '|'.$n.'|'.$n2.'|'.$numbs3.'|';
+                                            //echo ';'.$c.': |'.$n.'|'.$n2.'|'.$numbs3.'| ; ';
+                                            if (isset($double_draws_array[$numbers_txt]) ) {
+                                                LottoDoubles::where('id', $double_draws_array[$numbers_txt]->id)->update(['total_hits'=>($double_draws_array[$numbers_txt]->total_hits+1), 'last'=>$d_date]);
+                                            } else {
+                                                DB::insert('insert into lotto_doubles (numbers, descript, last) values(?, ?, ?)',[$numbers_txt, $c, $d_date]);
+                                            }
+                                        }
+                                    }
+                                } else {
+                                    if ($c < 6) {
+                                        $numbers_txt = '|'.$n.'|'.$numbs2.'|';
+                                        //echo ';'.$c.': |'.$n.'|'.$numbs2.'| ; ';
+                                        if (isset($double_draws_array[$numbers_txt]) ) {
+                                            LottoDoubles::where('id', $double_draws_array[$numbers_txt]->id)->update(['total_hits'=>($double_draws_array[$numbers_txt]->total_hits+1), 'last'=>$d_date]);
+                                        } else {
+                                            DB::insert('insert into lotto_doubles (numbers, descript, last) values(?, ?, ?)',[$numbers_txt, $c, $d_date]);
+                                        }
+                                    }
+                                }
+                            }
+                        } else {
+                            //echo $numbs;
+                        }
+                    }
+                }
+                $d_count++;
+                //if ($d_count > 10)
+                    //break;
+                }
+            }
+        }
+    }
 }
