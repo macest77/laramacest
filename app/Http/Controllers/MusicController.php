@@ -65,33 +65,41 @@ class MusicController extends Controller
             echo 'Błędne wywołanie';
     }
     
-    public function chart($listAdminPass)
+    public function postchart(Request $request)
     {
-        $pass = md5($listAdminPass);
-        echo '.'.$listAdminPass.'.';
+        //echo '.'.$request->admin_password.'.';
+        $pass = md5($request->admin_password);
+        //echo '.'.$request->admin_password.'.'.$pass;exit;
         
         $result = Config::where('id', '=', 'list_admin')->where('config', '=', $pass)->first();
         
         if ($result) {
             echo 'ok';
-            $standingsService = (new StandingsService);
+            $standingsService = new StandingsService;
             $standingsService->createStanding();
         } else {
             echo $pass;
+            return view('chart_view');
         }
+    }
+
+    public function chart()
+    {
+        return view('chart_view');
     }
     
     public function listing($id)
     {
         $id = (int)$id;
         
-        
-        if ($standing = (new StandingsService)->getStanding($id)) {
-            
+        $standing_service = new StandingsService;
+        if ($standing = $standing_service->getStanding($id)) {
+            $listings = array();
         } else {
             $standing = array();
+            $listings = $standing_service->getStandingsList(1);
         }
         
-        return view('listing_view',['standing'=>$standing]);
+        return view('listing_view',['standing'=>$standing, 'listings'=>$listings]);
     }
 }

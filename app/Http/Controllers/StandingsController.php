@@ -51,4 +51,10 @@ class StandingsController extends Controller
     {
         
     }
+
+    public function countlittlepoints()
+    {
+        $standingsService = (new StandingsService);
+        $standingsService->countLittlePoints();
+    }
 }
