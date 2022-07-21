@@ -48,6 +48,8 @@ class StandingsService
                                 'songi_list_points'=>((101 - $place)),
                                 'songi_list_place'=>$place,
                                 'total_points'=>$add_points);
+                    if ($place == 1)
+                        $update_array['first_places'] = $song->first_places + 1;
                     if (empty($song->first_standing) ) {
                         $update_array['first_standing'] = $this->new_standing_id;
                         $update_array['high_standing'] = $place;
@@ -128,5 +130,37 @@ class StandingsService
         }
          
         return false;
+    }
+    
+    public function getStandingsList(int $page = 1)
+    {
+        if ($page < 1) $page = 1;
+        $skip = $page*20 - 20;
+        
+        return Standings::select('id', 'stand_date')
+                    ->orderby('stand_date', 'desc')
+                    ->skip($skip)
+                    ->take(20)
+                    ->get();
+    }
+
+    public function countLittlePoints()
+    {
+        $this->getLastStanding();
+        for($i = 0; $i < $this->last_standing->id; $i++) {
+            $standing = $this->getStanding(($i+1));
+            $places = count($standing['standing_data']);
+            echo $places.'<br />';
+
+            print_r($standing['standing_data']);
+            foreach($standing['standing_data'] as $k => $v) {
+                if ( $v['place'] > 20 ) {
+                    if (empty($little_points[$v['name']]))
+                        $little_points[$v['name']] = 0;
+                    $little_points[$v['name']] += ($places + 1 - $v['place']);
+                }
+            }
+            echo '<br />'.print_r($little_points, true);
+        }
     }
 }
