@@ -17,3 +17,7 @@ use Illuminate\Support\Facades\Route;
 Route::middleware('auth:api')->get('/user', function (Request $request) {
     return $request->user();
 });
+Route::get('getlastdraw', [App\Http\Controllers\ApiLottoController::class, 'getlastdraw']);
+Route::get('getdraw/{date}', [App\Http\Controllers\ApiLottoController::class, 'getdraw']);
+Route::get('getlaststanding', [App\Http\Controllers\ApiMusicController::class, 'getlaststanding']);
+Route::get('getstanding/{id}', [App\Http\Controllers\ApiMusicController::class, 'getstanding']);
