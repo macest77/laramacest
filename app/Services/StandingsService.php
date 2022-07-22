@@ -7,8 +7,8 @@ use App\Models\Bands;
 
 class StandingsService
 {
-    private $_new_standing_txt = '';
-    private $_new_standing_array = array();
+    protected $_new_standing_txt = '';
+    protected $_new_standing_array = array();
     
     public $last_standing = null;
     public $new_standing_id = 1;
@@ -30,8 +30,7 @@ class StandingsService
                 if (!empty($song->songi_list_place) )
                     $last_place = $song->songi_list_place;
                 $this->_new_standing_txt .= $song->songi_list_id.' ('.$last_place.')|';
-                echo $place.';';
-                echo $song->songi_list_title.'<br />';
+                echo $place.';'.$song->songi_list_title.'<br />';
                 //$z = $place++;
                 //echo $z.';'.$place.'<br />';
             }
