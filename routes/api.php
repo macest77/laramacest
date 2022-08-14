@@ -21,3 +21,4 @@ Route::get('getlastdraw', [App\Http\Controllers\ApiLottoController::class, 'getl
 Route::get('getdraw/{date}', [App\Http\Controllers\ApiLottoController::class, 'getdraw']);
 Route::get('getlaststanding', [App\Http\Controllers\ApiMusicController::class, 'getlaststanding']);
 Route::get('getstanding/{id}', [App\Http\Controllers\ApiMusicController::class, 'getstanding']);
+Route::get('band/{id}', [App\Http\Controllers\ApiDataController::class, 'getBandData']);
